@@ -117,7 +117,7 @@ void getNTPtime() {
 
     if (WIFI_state != WL_CONNECTED) telnet_println( "NTP ERROR! ==> WiFi NOT Connected!" );
     else {
-        configTime("TZ_Etc_UTC", config.NTPServerName, config.NTPServerName, config.NTPServerName);
+        myconfigTime("TZ_Etc_UTC", config.NTPServerName, config.NTPServerName, config.NTPServerName);
         unsigned long start_sync = millis();
         loop_timeOut = false;
         while ( !NTP_Sync && !loop_timeOut) {
@@ -177,7 +177,7 @@ String curDateTime() {
     cur_unixtime = curUnixTime();
     DateTime = ConvertTimeStamp(cur_unixtime);
     cdt_var =  String(WeekDays[DateTime.wday]) + ", " + String(DateTime.year) + "/" + String(DateTime.month) + "/" + String(DateTime.day);
-    cdt_var += "\t" + String(DateTime.hour) + ":" + String(DateTime.minute) + ":" + String(DateTime.second);
+    cdt_var += "  " + String(DateTime.hour) + ":" + String(DateTime.minute) + ":" + String(DateTime.second);
     return cdt_var;
 }
 

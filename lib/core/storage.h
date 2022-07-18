@@ -92,6 +92,10 @@ struct __attribute__((__packed__)) strConfig {
   long UPDATE_Port;
   char UPDATE_User[16];
   char UPDATE_Password[32];
+  char SIMCardPIN[5];
+  char APN[128];
+  char MODEM_User[32];
+  char MODEM_Password[32];
   char WEB_User[16];
   char WEB_Password[32];
   float Temp_Corr;
@@ -118,8 +122,7 @@ struct __attribute__((__packed__)) strConfig {
 //  STORAGE functions
 //
 void storage_print() {
-  if (config.DEBUG) {
-    Serial.printf("Printing Config [%d bytes]\n", sizeof(config));
+    Serial.printf("Config Size: [%d bytes]\n", sizeof(config));
     if (sizeof(config) + 16 > Mem_Start_Pos) Serial.println ("WARNING: Memory zones overlapinng!!");
     Serial.printf("Device Name: %s and Location: %s\n", config.DeviceName, config.Location);
     Serial.printf("ON time[sec]: %d  -  SLEEP Time[min]: %d -  DEEPSLEEP enabled: %d\n", config.ONTime, config.SLEEPTime, config.DEEPSLEEP);
@@ -139,18 +142,14 @@ void storage_print() {
     Serial.printf("NTP update every %ld minutes.\t", config.Update_Time_Via_NTP_Every);
     Serial.printf("Timezone: %ld  -  DayLight: %d\n", config.TimeZone, config.isDayLightSaving);
 
-    Serial.printf("Remote Allowed: %d\t", config.Remote_Allow);
-    Serial.printf("WEB User: %s  -  WEB Pass: %s\n", config.WEB_User, config.WEB_Password);
-    Serial.printf("SWITCH default status: %d\t", config.SWITCH_Default);
-    Serial.printf("Temperature Correction: %f\t", config.Temp_Corr);
-    Serial.printf("LDO Voltage Correction: %f\n", config.LDO_Corr);
-  }
+    Serial.printf("HW Module: %d  -  Remote Allowed: %d  -  WEB User: %s  -  WEB Pass: %s\n", config.HW_Module, config.Remote_Allow, config.WEB_User, config.WEB_Password);
+    Serial.printf("SWITCH default: %d  -  Temperature Correction: %.2f  -  Voltage Correction: %.2f\n", config.SWITCH_Default, config.Temp_Corr, config.LDO_Corr);
 }
 
 boolean storage_read() {
-  if (config.DEBUG) Serial.println("Reading Configuration");
+    //if (config.DEBUG) Serial.println("Reading Configuration");
     if (EEPROM.read(0) == 'C' && EEPROM.read(1) == 'F'  && EEPROM.read(2) == 'G' && EEPROMReadlong(3) > 2 && EEPROMReadlong(3) == sizeof(config)) {
-        if (config.DEBUG) Serial.println("Configurarion Found!");
+        //if (config.DEBUG) Serial.println("Configurarion Found!");
         loadStruct(&config, EEPROMReadlong(3), 15);     // I just decided that it will read/write after address 15
       return false;   // "false" means no error
     }
@@ -195,5 +194,5 @@ void storage_setup() {
         config_defaults();
         storage_write();
     }
-    storage_print();
+    if (config.DEBUG) storage_print();
 }

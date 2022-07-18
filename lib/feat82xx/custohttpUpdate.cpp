@@ -23,6 +23,8 @@
  *
  */
 
+#ifdef ESP8266
+
 #include "custohttpUpdate.h"
 #include <StreamString.h>
 
@@ -438,4 +440,6 @@ bool custohttpUpdate::runUpdate(Stream& in, uint32_t size, String md5, int comma
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_HTTPUPDATE)
 custohttpUpdate ESPhttpUpdate;
+#endif
+
 #endif

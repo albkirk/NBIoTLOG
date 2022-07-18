@@ -23,11 +23,13 @@
  *
  */
 
+#ifdef ESP8266
+
 #ifndef custohttpUpdate_H_
 #define custohttpUpdate_H_
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>         // Error compilling to ESP32
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266HTTPClient.h>
@@ -124,3 +126,5 @@ extern custohttpUpdate ESPhttpUpdate;
 #endif
 
 #endif /* custohttpUpdate_H_ */
+
+#endif /* ESP8266 */

@@ -12,34 +12,42 @@
 
 // Libraries to INCLUDE
 #include <storage.h>
-#include <hw8266.h>
+
+#ifdef ESP32
+    #include <esp32hw.h>
+#else
+    #include <hw8266.h>
+#endif
+
 #include <mywifi.h>
-#include <httpupd.h>
+
+#ifdef ESP8266
+    #include <httpupd.h>
+#endif
+
 #include <telnet.h>
 #include <ntp.h>
 #include <mqtt.h>
 #include <hassio.h>
 #include <ota.h>
-#include <global.h>
 #include <project.h>
 #include <web.h>
+#include <global.h>
 #include <actions.h>                                    // Added later because functions from project are called here.
 
 
 void setup() {
-// Starting with WiFi interface shutdown in order to save energy
+  // Starting with WiFi interface shutdown in order to save energy
     wifi_disconnect();
 
   // Start Serial interface
-    //if (config.DEBUG) {
-            Serial.begin(74880);                  // This odd baud speed will shows ESP8266 boot diagnostics too.
-            //Serial.begin(115200);               // For faster communication use 115200
+    Serial.begin(74880);                  // This odd baud speed will shows ESP8266 boot diagnostics too.
+    //Serial.begin(115200);               // For faster communication use 115200
 
-            Serial.println("");
-            Serial.println("Hello World!");
-            Serial.println("My ID is " + ChipID + " and I'm running version " + SWVer);
-            Serial.println("Reset reason: " + ESPWakeUpReason());
-    //}
+    Serial.println("");
+    Serial.println("Hello World!");
+    Serial.println("My ID is " + ChipID + " and I'm running version " + SWVer);
+    Serial.println("Reset reason: " + ESPWakeUpReason());
 
   // Start Storage service and read stored configuration
     storage_setup();
@@ -54,8 +62,9 @@ void setup() {
     wifi_setup();
     
   // Check for HTTP Upgrade
-    http_upg();               // Note: this service kills all running UDP and TCP services
-
+#ifdef ESP8266
+      http_upg();               // Note: this service kills all running UDP and TCP services
+#endif
   // Start TELNET service
     if (config.TELNET) telnet_setup();
 

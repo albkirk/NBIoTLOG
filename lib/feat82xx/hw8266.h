@@ -9,6 +9,9 @@
 #define ChipID HEXtoUpperString(ESP.getChipId(), 6)
 #define ESP_SSID String("ESP-" + ChipID)               // SSID used as Acces Point
 #define Number_of_measures 5                           // Number of value samples (measurements) to calculate average
+byte SLEEPTime = config.SLEEPTime;          // Variable to allow temporary change the sleeptime (ex.: = 0)
+bool Celular_Connected = false;                          // Modem Connection state
+
 
 // The ESP8266 RTC memory is arranged into blocks of 4 bytes. The access methods read and write 4 bytes at a time,
 // so the RTC data structure should be padded to a 4-byte multiple.
@@ -20,18 +23,35 @@ struct __attribute__((__packed__)) struct_RTC {
   unsigned long lastUTCTime = 0UL;          // 4 bytes? 16 in total
 } rtcData;
 
+static const String flash_size_map_Name[] = {
+    "512KB (MAP: 256/256)",                    /**<  Flash size : 4Mbits. Map : 256KBytes + 256KBytes */
+    "256KB (MAP: 256/ - )",                    /**<  Flash size : 2Mbits. Map : 256KBytes */
+    "1MB (MAP: 512/512)",                    /**<  Flash size : 8Mbits. Map : 512KBytes + 512KBytes */
+    "2MB (MAP: 512/512)",                   /**<  Flash size : 16Mbits. Map : 512KBytes + 512KBytes */
+    "4MB (MAP: 512/512)",                   /**<  Flash size : 32Mbits. Map : 512KBytes + 512KBytes */
+    "2MB (MAP: 1024/1024)",                 /**<  Flash size : 16Mbits. Map : 1024KBytes + 1024KBytes */
+    "4MB (MAP: 1024/1024)",                 /**<  Flash size : 32Mbits. Map : 1024KBytes + 1024KBytes */
+    "4MB (MAP: 2048/2048)",                 /**<  attention: don't support now ,just compatible for nodemcu;
+                                                  Flash size : 32Mbits. Map : 2048KBytes + 2048KBytes */
+    "8MB (MAP: 1024/1024)",                 /**<  Flash size : 64Mbits. Map : 1024KBytes + 1024KBytes */
+    "16MB (MAP: 1024/1024)"                 /**<  Flash size : 128Mbits. Map : 1024KBytes + 1024KBytes */
+};
+
+
 // ADC to internal voltage
 #if Using_ADC == false
     ADC_MODE(ADC_VCC)                       // Get voltage from Internal ADC
 #endif
-#define Default_ADC_PIN A0
 
+#define Default_ADC_PIN A0
 
 // Initialize the Webserver
 ESP8266WebServer MyWebServer(80);  
 
 // initialize WiFi Security
-WiFiSec WiFiSec(CA_CERT_PROG, CLIENT_CERT_PROG, CLIENT_KEY_PROG);
+WiFiSec wifisec(CA_CERT_PROG, CLIENT_CERT_PROG, CLIENT_KEY_PROG);
+WiFiClient secureclient = wifisec.getWiFiClient();    // Use this for secure connection
+WiFiClient unsecuclient;                    // Use this for unsecure connection
 
 
 // Battery & ESP Voltage
@@ -119,6 +139,10 @@ if (config.DHCP) {
     storage_write();
     }
 }
+}
+
+void myconfigTime(const char* tz, const char* server1, const char* server2, const char* server3) {
+    configTime(tz, server1, server2, server3);
 }
 
 void wifi_disconnect() {
@@ -231,6 +255,21 @@ String ESPWakeUpReason() {    // WAKEUP_REASON
   return ESP.getResetReason();
 }
 
+String Flash_Size() {
+    return flash_size_map_Name[system_get_flash_size_map()];
+}
+
+uint32_t CPU_Clock() {
+    uint32_t cpu_clock = uint32_t(system_get_cpu_freq());
+    // Serial.println("CPU Clock: " + String(cpu_clock) + " MHz");
+    return cpu_clock;
+}
+
+void CPU_Boost(bool boost = true) {
+    if(boost) system_update_cpu_freq(160);
+    else system_update_cpu_freq(80);
+}
+
 void FormatConfig() {                                   // WARNING!! To be used only as last resource!!!
     Serial.println(ESP.eraseConfig());
     RTC_reset();
@@ -284,6 +323,18 @@ void hw_setup() {
       }
 
   // Input GPIOs
+    if (Def_Config>=0) {
+        pinMode(Def_Config, INPUT_PULLUP);
+        if (!digitalRead(Def_Config)) {
+            delay(5000);
+            if (!digitalRead(Def_Config)) {
+                flash_LED(5);
+                storage_reset();
+                RTC_reset();
+                ESPRestart();
+            }
+        }
+    }
 
 
       //RTC_read();                                      // Read the RTC memmory
@@ -291,5 +342,6 @@ void hw_setup() {
 
 void hw_loop() {
   // LED handling usefull if you need to identify the unit from many
-      if (LED_ESP>=0) digitalWrite(LED_ESP, boolean(!config.LED));  // Values is reversed due to Pull-UP configuration
+      //if (LED_ESP>=0) digitalWrite(LED_ESP, boolean(!config.LED));  // Values is reversed due to Pull-UP configuration
+      yield();
 }
